@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
+contract POFTreasury is Ownable {
+    IERC20 public immutable pofToken;
+    address public governanceDAO;
+
+    constructor(address _pofToken, address initialOwner) Ownable(initialOwner) {
+        pofToken = IERC20(_pofToken);
+    }
+
+    modifier onlyGovernanceDAO() {
+        require(msg.sender == governanceDAO, "Not authorized");
+        _;
+    }
+
+    function setGovernanceDAO(address _governanceDAO) external onlyOwner {
+        governanceDAO = _governanceDAO;
+    }
+
+    function transferFunds(address recipient, uint256 amount) external onlyGovernanceDAO {
+        pofToken.transfer(recipient, amount);
+    }
+
+}
