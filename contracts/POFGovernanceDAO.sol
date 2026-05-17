@@ -37,6 +37,10 @@ contract POFGovernanceDAO is Ownable {
         isMember[msg.sender] = true;
     }
 
+    function closeShareSale() external onlyOwner {
+        isShareSaleActive = false;
+    }
+
 
 
 
