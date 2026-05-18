@@ -17,6 +17,7 @@ contract POFGovernanceDAO is Ownable {
     mapping(address => uint256) public shares;
     mapping(address => bool) public isMember;
     mapping(address => address) public delegates;
+    mapping(address => uint256) public delegatedShares;
 
     enum VoteChoice { 
         Against, 
@@ -92,7 +93,8 @@ contract POFGovernanceDAO is Ownable {
         require(block.timestamp <= ledgerProposals[proposalId].deadline,"Voting period has ended");
         require(!hasVoted[proposalId][msg.sender],"Member has already voted");
         require(shares[msg.sender] > 0, "Member has no voting power");
-        uint256 votingPower = shares[msg.sender];
+        require(delegates[msg.sender] == address(0), "Delegated members cannot vote directly");
+        uint256 votingPower = shares[msg.sender] + delegatedShares[msg.sender];
         if (choice == VoteChoice.For) {
             ledgerProposals[proposalId].forVotes += votingPower;
         } else if (choice == VoteChoice.Against) {
@@ -108,6 +110,7 @@ contract POFGovernanceDAO is Ownable {
         require(memberDelegate != msg.sender,"Cannot delegate yourself");
         require(isMember[memberDelegate], "Delegate must be a DAO member");
         delegates[msg.sender] = memberDelegate;
+        delegatedShares[memberDelegate] += shares[msg.sender];
     }
 
 
