@@ -76,14 +76,14 @@ contract POFGovernanceDAO is Ownable {
         require(bytes(title).length > 0, "Title cannot be empty");
         require(bytes(description).length > 0, "Description cannot be empty");
         require(durationInDays > 0, "Duration must be greater than zero");
+
         uint256 proposalId = proposalCount++;
         Proposal storage newProposal = ledgerProposals[proposalId];
+        
         newProposal.id = proposalId;
         newProposal.title = title;
         newProposal.description = description;
         newProposal.deadline = block.timestamp + (durationInDays * 1 days);
-
-
     }
     
 }
