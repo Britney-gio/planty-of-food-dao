@@ -79,11 +79,26 @@ contract POFGovernanceDAO is Ownable {
 
         uint256 proposalId = proposalCount++;
         Proposal storage newProposal = ledgerProposals[proposalId];
-        
+
         newProposal.id = proposalId;
         newProposal.title = title;
         newProposal.description = description;
         newProposal.deadline = block.timestamp + (durationInDays * 1 days);
     }
-    
+
+    function vote(uint256 proposalId, VoteChoice choice) external onlyMember {
+        require(proposalId < proposalCount,"Proposal does not exist");
+        require(block.timestamp <= ledgerProposals[proposalId].deadline,"Voting period has ended");
+        require(!hasVoted[proposalId][msg.sender],"Member has already voted");
+        require(shares[msg.sender] > 0, "Member has no voting power");
+        uint256 votingPower = shares[msg.sender];
+        if (choice == VoteChoice.For) {
+            ledgerProposals[proposalId].forVotes += votingPower;
+        } else if (choice == VoteChoice.Against) {
+            ledgerProposals[proposalId].againstVotes += votingPower;
+        } else if (choice == VoteChoice.Abstain) {
+            ledgerProposals[proposalId].abstainVotes += votingPower;
+        }
+        hasVoted[proposalId][msg.sender] = true;
+    }
 }
