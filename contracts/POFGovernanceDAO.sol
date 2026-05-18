@@ -16,6 +16,7 @@ contract POFGovernanceDAO is Ownable {
 
     mapping(address => uint256) public shares;
     mapping(address => bool) public isMember;
+    mapping(address => address) public delegates;
 
     enum VoteChoice { 
         Against, 
@@ -101,4 +102,13 @@ contract POFGovernanceDAO is Ownable {
         }
         hasVoted[proposalId][msg.sender] = true;
     }
+
+    function delegateVote(address memberDelegate) external onlyMember {
+        require(memberDelegate != address(0), "Invalid address");
+        require(memberDelegate != msg.sender,"Cannot delegate yourself");
+        require(isMember[memberDelegate], "Delegate must be a DAO member");
+        delegates[msg.sender] = memberDelegate;
+    }
+
+
 }
