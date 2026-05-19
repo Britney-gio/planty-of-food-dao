@@ -88,6 +88,14 @@ contract POFGovernanceDAO is Ownable {
         newProposal.deadline = block.timestamp + (durationInDays * 1 days);
     }
 
+    function delegateVote(address memberDelegate) external onlyMember {
+        require(memberDelegate != address(0), "Invalid address");
+        require(memberDelegate != msg.sender,"Cannot delegate yourself");
+        require(isMember[memberDelegate], "Delegate must be a DAO member");
+        delegates[msg.sender] = memberDelegate;
+        delegatedShares[memberDelegate] += shares[msg.sender];
+    }
+
     function vote(uint256 proposalId, VoteChoice choice) external onlyMember {
         require(proposalId < proposalCount,"Proposal does not exist");
         require(block.timestamp <= ledgerProposals[proposalId].deadline,"Voting period has ended");
@@ -103,15 +111,15 @@ contract POFGovernanceDAO is Ownable {
             ledgerProposals[proposalId].abstainVotes += votingPower;
         }
         hasVoted[proposalId][msg.sender] = true;
+    }    
+
+    function executeProposal(uint256 proposalId) external {
+        require(proposalId < proposalCount,"Proposal does not exist");
+        Proposal storage proposal = ledgerProposals[proposalId];
+        require(block.timestamp > proposal.deadline, "Voting period is still active");
+        require(!proposal.executed, "Proposal already executed");
+        if (proposal.forVotes > proposal.againstVotes) {
+            proposal.approved = true;
+        }
     }
-
-    function delegateVote(address memberDelegate) external onlyMember {
-        require(memberDelegate != address(0), "Invalid address");
-        require(memberDelegate != msg.sender,"Cannot delegate yourself");
-        require(isMember[memberDelegate], "Delegate must be a DAO member");
-        delegates[msg.sender] = memberDelegate;
-        delegatedShares[memberDelegate] += shares[msg.sender];
-    }
-
-
 }
