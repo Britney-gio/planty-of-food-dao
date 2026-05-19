@@ -35,6 +35,9 @@ contract POFGovernanceDAO is Ownable {
         uint256 abstainVotes;
         bool approved;
         bool executed;    
+        bool isFinancialProposal;
+        address recipient;
+        uint256 amount;
     }
 
     mapping(uint256 => Proposal) public ledgerProposals;
@@ -70,7 +73,7 @@ contract POFGovernanceDAO is Ownable {
         isShareSaleActive = false;
     }
 
-    function createProposal(
+    function createGovernanceProposal(
         string calldata title,
         string calldata description,
         uint256 durationInDays
@@ -86,6 +89,32 @@ contract POFGovernanceDAO is Ownable {
         newProposal.title = title;
         newProposal.description = description;
         newProposal.deadline = block.timestamp + (durationInDays * 1 days);
+        newProposal.isFinancialProposal = false;
+    }
+
+    function createFinancialProposal(
+        string calldata title,
+        string calldata description,
+        uint256 durationInDays,
+        address recipient,
+        uint256 amount
+    ) external onlyMember {
+        require(bytes(title).length > 0, "Title cannot be empty");
+        require(bytes(description).length > 0, "Description cannot be empty");
+        require(durationInDays > 0, "Duration must be greater than zero");
+        require(recipient != address(0), "Invalid recipient");
+        require(amount > 0, "Amount must be greater than zero");
+
+        uint256 proposalId = proposalCount++;
+        Proposal storage newProposal = ledgerProposals[proposalId];
+
+        newProposal.id = proposalId;
+        newProposal.title = title;
+        newProposal.description = description;
+        newProposal.deadline = block.timestamp + (durationInDays * 1 days);
+        newProposal.isFinancialProposal = true;
+        newProposal.recipient = recipient;
+        newProposal.amount = amount;
     }
 
     function delegateVote(address memberDelegate) external onlyMember {
@@ -120,6 +149,10 @@ contract POFGovernanceDAO is Ownable {
         require(!proposal.executed, "Proposal already executed");
         if (proposal.forVotes > proposal.againstVotes) {
             proposal.approved = true;
+            if (proposal.isFinancialProposal) {
+                treasury.transferFunds(proposal.recipient,proposal.amount);
+            }
         }
+        proposal.executed = true;
     }
 }
