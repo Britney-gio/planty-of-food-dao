@@ -12,6 +12,11 @@ contract POFTreasury is Ownable {
         pofToken = IERC20(_pofToken);
     }
 
+    event TreasuryTransfer(
+        address indexed recipient,
+        uint256 amount
+    );
+
     modifier onlyGovernanceDAO() {
         require(msg.sender == governanceDAO, "Not authorized");
         _;
@@ -24,6 +29,6 @@ contract POFTreasury is Ownable {
     function transferFunds(address recipient, uint256 amount) external onlyGovernanceDAO {
         bool success = pofToken.transfer(recipient, amount);
         require(success, "Token transfer failed");
+        emit TreasuryTransfer(recipient, amount);
     }
-
 }

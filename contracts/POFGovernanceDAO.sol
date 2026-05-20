@@ -53,12 +53,38 @@ contract POFGovernanceDAO is Ownable {
         require(_treasury != address(0), "Invalid treasury address");
         require(_sharePrice > 0, "Share price must be greater than zero");
         require(initialOwner != address(0), "Invalid owner address");
-        
+
         pofToken = IERC20(_pofToken);
         treasury = POFTreasury(_treasury);
         sharePrice = _sharePrice;
         isShareSaleActive = true;
     }
+
+    event SharesPurchase( 
+        address indexed buyer,
+        uint256 amount,
+        uint256 totalCost
+    );
+
+    event ProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        string title,
+        bool isFinancialProposal
+    );
+
+    event MemberVoted(
+        uint256 indexed proposalId,
+        address indexed voter,
+        VoteChoice choice,
+        uint256 votingPower
+    );
+
+    event ProposalExecuted(
+        uint256 indexed proposalId,
+        bool approved,
+        bool isFinancialProposal
+    );
 
     modifier onlyMember(){
         require(isMember[msg.sender], "Only DAO members can call this function");
@@ -82,6 +108,7 @@ contract POFGovernanceDAO is Ownable {
         if (delegates[msg.sender] != address(0)) {
             delegatedShares[delegates[msg.sender]] += amount;
         }
+        emit SharesPurchase(msg.sender, amount, totalCost);
     }
 
     function closeShareSale() external onlyOwner {
@@ -105,6 +132,8 @@ contract POFGovernanceDAO is Ownable {
         newProposal.description = description;
         newProposal.deadline = block.timestamp + (durationInDays * 1 days);
         newProposal.isFinancialProposal = false;
+
+        emit ProposalCreated(proposalId, msg.sender, title, false);
     }
 
     function createFinancialProposal(
@@ -130,6 +159,8 @@ contract POFGovernanceDAO is Ownable {
         newProposal.isFinancialProposal = true;
         newProposal.recipient = recipient;
         newProposal.amount = amount;
+
+        emit ProposalCreated(proposalId, msg.sender, title, true);
     }
 
     function delegateVote(address memberDelegate) external onlyMember {
@@ -156,6 +187,8 @@ contract POFGovernanceDAO is Ownable {
             ledgerProposals[proposalId].abstainVotes += votingPower;
         }
         hasVoted[proposalId][msg.sender] = true;
+
+        emit MemberVoted(proposalId, msg.sender, choice, votingPower);
     }    
 
     function executeProposal(uint256 proposalId) external {
@@ -170,5 +203,7 @@ contract POFGovernanceDAO is Ownable {
             }
         }
         proposal.executed = true;
+
+        emit ProposalExecuted(proposalId, proposal.approved, proposal.isFinancialProposal);
     }
 }
