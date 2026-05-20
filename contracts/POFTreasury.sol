@@ -10,6 +10,8 @@ contract POFTreasury is Ownable {
 
     constructor(address _pofToken, address initialOwner) Ownable(initialOwner) {
         pofToken = IERC20(_pofToken);
+        require(_pofToken != address(0), "Invalid token address");
+        require(initialOwner != address(0), "Invalid owner address");
     }
 
     event TreasuryTransfer(
@@ -23,6 +25,7 @@ contract POFTreasury is Ownable {
     }
 
     function setGovernanceDAO(address _governanceDAO) external onlyOwner {
+        require(_governanceDAO != address(0), "Invalid DAO address");
         governanceDAO = _governanceDAO;
     }
 
