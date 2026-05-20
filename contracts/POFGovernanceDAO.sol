@@ -49,6 +49,11 @@ contract POFGovernanceDAO is Ownable {
         uint256 _sharePrice,
         address initialOwner
     ) Ownable (initialOwner) {
+        require(_pofToken != address(0), "Invalid token address");
+        require(_treasury != address(0), "Invalid treasury address");
+        require(_sharePrice > 0, "Share price must be greater than zero");
+        require(initialOwner != address(0), "Invalid owner address");
+        
         pofToken = IERC20(_pofToken);
         treasury = POFTreasury(_treasury);
         sharePrice = _sharePrice;
