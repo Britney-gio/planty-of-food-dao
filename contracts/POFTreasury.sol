@@ -27,6 +27,8 @@ contract POFTreasury is Ownable {
     }
 
     function transferFunds(address recipient, uint256 amount) external onlyGovernanceDAO {
+        require(recipient != address(0), "Invalid recipient address");
+        require(amount > 0, "Amount must be greater than zero");
         bool success = pofToken.transfer(recipient, amount);
         require(success, "Token transfer failed");
         emit TreasuryTransfer(recipient, amount);
