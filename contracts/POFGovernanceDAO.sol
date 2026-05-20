@@ -64,9 +64,19 @@ contract POFGovernanceDAO is Ownable {
         require(isShareSaleActive,"Share sale is closed");
         require(amount > 0, "Amount must be greater than zero");
         uint256 totalCost = amount * sharePrice;
-        pofToken.transferFrom(msg.sender, address(treasury), totalCost);
+
+        bool success = pofToken.transferFrom(
+            msg.sender,
+            address(treasury),
+            totalCost
+        );
+        require(success, "Token transfer failed");
+
         shares[msg.sender] += amount;
         isMember[msg.sender] = true;
+        if (delegates[msg.sender] != address(0)) {
+            delegatedShares[delegates[msg.sender]] += amount;
+        }
     }
 
     function closeShareSale() external onlyOwner {

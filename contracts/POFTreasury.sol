@@ -22,7 +22,8 @@ contract POFTreasury is Ownable {
     }
 
     function transferFunds(address recipient, uint256 amount) external onlyGovernanceDAO {
-        pofToken.transfer(recipient, amount);
+        bool success = pofToken.transfer(recipient, amount);
+        require(success, "Token transfer failed");
     }
 
 }
