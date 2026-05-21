@@ -26,13 +26,14 @@ describe("POFGovernanceDAO", async function () {
             ethers.parseEther("10"),
             owner.address
         );
-        // Set governanceDAO address in treasury contract
+        
         await treasury.setGovernanceDAO(await governanceDAO.getAddress());
 
         assert.ok(await pofToken.getAddress());
         assert.ok(await treasury.getAddress());
         assert.ok(await governanceDAO.getAddress()); 
 
+        // TEST1: buy shares and check new member and treasury balance
         await pofToken.transfer( 
             Giorgia.address, 
             ethers.parseEther("100")
@@ -48,6 +49,23 @@ describe("POFGovernanceDAO", async function () {
         assert.equal(isGiorgiaMember, true);
         const treasuryBalance = await pofToken.balanceOf(await treasury.getAddress());
         assert.equal(treasuryBalance, ethers.parseEther("50"));
+
+        // TEST2 
+        await governanceDAO.connect(Giorgia).createGovernanceProposal(
+            "Add new supplier",
+            "Proposal to add a new organic supplier",
+            7
+        );
+        const proposalCount = await governanceDAO.proposalCount();
+        assert.equal(proposalCount, 1n);
+        const proposal = await governanceDAO.ledgerProposals(0);
+        assert.equal(proposal.id, 0n);
+        assert.equal(proposal.title, "Add new supplier");
+        assert.equal(proposal.description, "Proposal to add a new organic supplier");
+        assert.equal(proposal.isFinancialProposal, false);
+        assert.equal(proposal.executed, false);
+        assert.equal(proposal.approved, false);
+        assert.ok(proposal.deadline > 0n);
     })
 
 
