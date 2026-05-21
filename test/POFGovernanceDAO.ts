@@ -116,5 +116,17 @@ describe("POFGovernanceDAO", async function () {
     assert.equal(GiorgiaHasVoted, true);
     const AlessandroHasVoted = await governanceDAO.hasVoted(0, Alessandro.address);
     assert.equal(AlessandroHasVoted, true);
+
+
+    // TEST 5 : execute proposal 
+    await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
+    await ethers.provider.send("evm_mine", []);
+    await governanceDAO.executeProposal(0); // Execute the first proposal FOR 
+    const executedProposal = await governanceDAO.ledgerProposals(0);
+    assert.equal(executedProposal.executed, true);
+    assert.equal(executedProposal.approved, true);
+
+
+
   });
 });
