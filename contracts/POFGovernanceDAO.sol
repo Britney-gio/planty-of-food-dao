@@ -20,9 +20,9 @@ contract POFGovernanceDAO is Ownable {
     mapping(address => uint256) public delegatedShares;
 
     enum VoteChoice { 
-        Against, 
-        For, 
-        Abstain
+        Against, //0
+        For,  // 1
+        Abstain  //2
     }
 
     struct Proposal {
