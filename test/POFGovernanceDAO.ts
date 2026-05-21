@@ -50,7 +50,7 @@ describe("POFGovernanceDAO", async function () {
         const treasuryBalance = await pofToken.balanceOf(await treasury.getAddress());
         assert.equal(treasuryBalance, ethers.parseEther("50"));
 
-        // TEST2 
+        // TEST2 : create Governance Proposal and check proposal details
         await governanceDAO.connect(Giorgia).createGovernanceProposal(
             "Add new supplier",
             "Proposal to add a new organic supplier",
@@ -58,15 +58,40 @@ describe("POFGovernanceDAO", async function () {
         );
         const proposalCount = await governanceDAO.proposalCount();
         assert.equal(proposalCount, 1n);
-        const proposal = await governanceDAO.ledgerProposals(0);
-        assert.equal(proposal.id, 0n);
-        assert.equal(proposal.title, "Add new supplier");
-        assert.equal(proposal.description, "Proposal to add a new organic supplier");
-        assert.equal(proposal.isFinancialProposal, false);
-        assert.equal(proposal.executed, false);
-        assert.equal(proposal.approved, false);
-        assert.ok(proposal.deadline > 0n);
+        const governanceProposal = await governanceDAO.ledgerProposals(0);
+        assert.equal(governanceProposal.id, 0n);
+        assert.equal(governanceProposal.title, "Add new supplier");
+        assert.equal(governanceProposal.description, "Proposal to add a new organic supplier");
+        assert.equal(governanceProposal.isFinancialProposal, false);
+        assert.equal(governanceProposal.executed, false);
+        assert.equal(governanceProposal.approved, false);
+        assert.ok(governanceProposal.deadline > 0n);
+
+        // TEST3 : create Financial Proposal and check proposal details
+        await governanceDAO.connect(Giorgia).createFinancialProposal(
+            "Support local organic farmers",
+            "Proposal to support local organic farmers with DAO funds",
+            7,
+            Giorgia.address,
+            ethers.parseEther("20")
+        );
+        const updatedProposalCount = await governanceDAO.proposalCount();
+        assert.equal(updatedProposalCount, 2n);
+        const financialProposal = await governanceDAO.ledgerProposals(1);
+        assert.equal(financialProposal.id, 1n);
+        assert.equal(financialProposal.title, "Support local organic farmers");
+        assert.equal(financialProposal.description, "Proposal to support local organic farmers with DAO funds");
+        assert.equal(financialProposal.isFinancialProposal, true);
+        assert.equal(financialProposal.recipient, Giorgia.address);
+        assert.equal(financialProposal.amount, ethers.parseEther("20"));
+        assert.equal(financialProposal.executed, false);
+        assert.equal(financialProposal.approved, false);
+        assert.ok(financialProposal.deadline > 0n);
+
+
+
     })
+
 
 
 
