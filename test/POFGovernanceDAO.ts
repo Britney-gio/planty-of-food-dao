@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { network } from "hardhat";
 
 describe("POFGovernanceDAO", async function () {
-
   it("Should deploy POFToken, POFTreasury and POFGovernanceDAO", async function () {
     const { ethers } = await network.connect();
     const [owner, giorgia, alessandro] = await ethers.getSigners();
@@ -336,7 +335,7 @@ describe("POFGovernanceDAO", async function () {
     const executedProposal = await governanceDAO.ledgerProposals(0);
     assert.equal(executedProposal.executed, true);
     assert.equal(executedProposal.approved, false); // forVotes is not greater than againstVotes
-  });  
+  });
 
   it("Should not allow a non-member to vote", async function () {
     const { ethers } = await network.connect();
@@ -349,7 +348,9 @@ describe("POFGovernanceDAO", async function () {
       await pofToken.getAddress(),
       owner.address,
     );
-    const POFGovernanceDAO = await ethers.getContractFactory("POFGovernanceDAO");
+    const POFGovernanceDAO = await ethers.getContractFactory(
+      "POFGovernanceDAO",
+    );
     const governanceDAO = await POFGovernanceDAO.deploy(
       await pofToken.getAddress(),
       await treasury.getAddress(),
@@ -382,53 +383,96 @@ describe("POFGovernanceDAO", async function () {
     );
   });
 
-    it("Should not allow double voting", async function () {
-      const { ethers } = await network.connect();
-      const [owner, giorgia] = await ethers.getSigners();
-      const POFToken = await ethers.getContractFactory("POFToken");
-      const pofToken = await POFToken.deploy(ethers.parseEther("1000000"));
-      const POFTreasury = await ethers.getContractFactory("POFTreasury");
-      const treasury = await POFTreasury.deploy(
-        await pofToken.getAddress(),
-        owner.address,
-      );
-      const POFGovernanceDAO = await ethers.getContractFactory(
-        "POFGovernanceDAO",
-      );
-      const governanceDAO = await POFGovernanceDAO.deploy(
-        await pofToken.getAddress(),
-        await treasury.getAddress(),
-        ethers.parseEther("10"),
-        owner.address,
-      );
+  it("Should not allow double voting", async function () {
+    const { ethers } = await network.connect();
+    const [owner, giorgia] = await ethers.getSigners();
+    const POFToken = await ethers.getContractFactory("POFToken");
+    const pofToken = await POFToken.deploy(ethers.parseEther("1000000"));
+    const POFTreasury = await ethers.getContractFactory("POFTreasury");
+    const treasury = await POFTreasury.deploy(
+      await pofToken.getAddress(),
+      owner.address,
+    );
+    const POFGovernanceDAO = await ethers.getContractFactory(
+      "POFGovernanceDAO",
+    );
+    const governanceDAO = await POFGovernanceDAO.deploy(
+      await pofToken.getAddress(),
+      await treasury.getAddress(),
+      ethers.parseEther("10"),
+      owner.address,
+    );
 
-      await treasury.setGovernanceDAO(await governanceDAO.getAddress());
+    await treasury.setGovernanceDAO(await governanceDAO.getAddress());
 
-      assert.ok(await pofToken.getAddress());
-      assert.ok(await treasury.getAddress());
-      assert.ok(await governanceDAO.getAddress());
+    assert.ok(await pofToken.getAddress());
+    assert.ok(await treasury.getAddress());
+    assert.ok(await governanceDAO.getAddress());
 
-      await pofToken.transfer(giorgia.address, ethers.parseEther("100"));
-      await pofToken
-        .connect(giorgia)
-        .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
-      await governanceDAO.connect(giorgia).buyShares(5);
-      await governanceDAO
-        .connect(giorgia)
-        .createGovernanceProposal(
-          "Add new look to the website",
-          "Proposal to rinovate the POF website with a new design",
-          7,
-        );
-      await governanceDAO.connect(giorgia).vote(0, 1); // Giorgia votes FOR the proposal
-      const giorgiaHasVoted = await governanceDAO.hasVoted(0, giorgia.address);
-      assert.equal(giorgiaHasVoted, true);
-      await assert.rejects(
-        governanceDAO.connect(giorgia).vote(0, 0),
-        /Member has already voted/,
+    await pofToken.transfer(giorgia.address, ethers.parseEther("100"));
+    await pofToken
+      .connect(giorgia)
+      .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+    await governanceDAO.connect(giorgia).buyShares(5);
+    await governanceDAO
+      .connect(giorgia)
+      .createGovernanceProposal(
+        "Add new look to the website",
+        "Proposal to rinovate the POF website with a new design",
+        7,
       );
-    });
+    await governanceDAO.connect(giorgia).vote(0, 1); // Giorgia votes FOR the proposal
+    const giorgiaHasVoted = await governanceDAO.hasVoted(0, giorgia.address);
+    assert.equal(giorgiaHasVoted, true);
+    await assert.rejects(
+      governanceDAO.connect(giorgia).vote(0, 0),
+      /Member has already voted/,
+    );
+  });
 
+  it("Should not allow voting after proposal deadline", async function () {
+    const { ethers } = await network.connect();
+    const [owner, giorgia] = await ethers.getSigners();
+    const POFToken = await ethers.getContractFactory("POFToken");
+    const pofToken = await POFToken.deploy(ethers.parseEther("1000000"));
+    const POFTreasury = await ethers.getContractFactory("POFTreasury");
+    const treasury = await POFTreasury.deploy(
+      await pofToken.getAddress(),
+      owner.address,
+    );
+    const POFGovernanceDAO = await ethers.getContractFactory(
+      "POFGovernanceDAO",
+    );
+    const governanceDAO = await POFGovernanceDAO.deploy(
+      await pofToken.getAddress(),
+      await treasury.getAddress(),
+      ethers.parseEther("10"),
+      owner.address,
+    );
+
+    await treasury.setGovernanceDAO(await governanceDAO.getAddress());
+
+    assert.ok(await pofToken.getAddress());
+    assert.ok(await treasury.getAddress());
+    assert.ok(await governanceDAO.getAddress());
+
+    await pofToken.transfer(giorgia.address, ethers.parseEther("100"));
+    await pofToken
+      .connect(giorgia)
+      .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+    await governanceDAO.connect(giorgia).buyShares(5);
+    await governanceDAO
+      .connect(giorgia)
+      .createGovernanceProposal(
+        "Add new garden area in the office",
+        "Proposal to create a new green garden area in the POF office to promote sustainability and well-being",
+        7,
+      );
+    await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60 + 1]);
+    await ethers.provider.send("evm_mine", []);
+    await assert.rejects(
+      governanceDAO.connect(giorgia).vote(0, 1),
+      /Voting period has ended/,
+    );
+  });
 });
-
-
