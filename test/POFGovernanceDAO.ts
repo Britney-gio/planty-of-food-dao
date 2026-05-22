@@ -475,4 +475,73 @@ describe("POFGovernanceDAO", async function () {
       /Voting period has ended/,
     );
   });
+
+  it("Should allow delegated voting power", async function () {
+    const { ethers } = await network.connect();
+    const [owner, giorgia, alessandro] = await ethers.getSigners();
+    const POFToken = await ethers.getContractFactory("POFToken");
+    const pofToken = await POFToken.deploy(ethers.parseEther("1000000"));
+    const POFTreasury = await ethers.getContractFactory("POFTreasury");
+    const treasury = await POFTreasury.deploy(
+      await pofToken.getAddress(),
+      owner.address,
+    );
+    const POFGovernanceDAO = await ethers.getContractFactory(
+      "POFGovernanceDAO",
+    );
+    const governanceDAO = await POFGovernanceDAO.deploy(
+      await pofToken.getAddress(),
+      await treasury.getAddress(),
+      ethers.parseEther("10"),
+      owner.address,
+    );
+
+    await treasury.setGovernanceDAO(await governanceDAO.getAddress());
+
+    assert.ok(await pofToken.getAddress());
+    assert.ok(await treasury.getAddress());
+    assert.ok(await governanceDAO.getAddress());
+
+    await pofToken.transfer(giorgia.address, ethers.parseEther("100"));
+    await pofToken
+      .connect(giorgia)
+      .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+    await pofToken.transfer(alessandro.address, ethers.parseEther("100"));
+    await pofToken
+      .connect(alessandro)
+      .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+
+    await governanceDAO.connect(giorgia).buyShares(3);
+    await governanceDAO.connect(alessandro).buyShares(5);
+    const giorgiaShares = await governanceDAO.shares(giorgia.address);
+    assert.equal(giorgiaShares, 3n);
+    const alessandroShares = await governanceDAO.shares(alessandro.address);
+    assert.equal(alessandroShares, 5n);
+
+    await governanceDAO.connect(giorgia).delegateVote(alessandro.address);
+    const giorgiaDelegate = await governanceDAO.delegates(giorgia.address);
+    assert.equal(giorgiaDelegate, alessandro.address);
+    const alessandroDelegatedShares = await governanceDAO.delegatedShares(
+      alessandro.address,
+    );
+    assert.equal(alessandroDelegatedShares, 3n);
+
+    await governanceDAO
+      .connect(alessandro)
+      .createGovernanceProposal(
+        "Expand local farmer partnerships",
+        "Proposal to expand partnerships with local sustainable farmers",
+        7,
+      );
+    await governanceDAO.connect(alessandro).vote(0, 1);
+    const delegatedProposal = await governanceDAO.ledgerProposals(0);
+    assert.equal(delegatedProposal.forVotes, 8n);
+    assert.equal(delegatedProposal.againstVotes, 0n);
+    assert.equal(delegatedProposal.abstainVotes, 0n);
+    await assert.rejects(
+      governanceDAO.connect(giorgia).vote(0, 1),
+      /Delegated members cannot vote directly/,
+    );
+  });
+
 });
