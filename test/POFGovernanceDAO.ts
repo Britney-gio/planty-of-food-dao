@@ -337,3 +337,46 @@ describe("POFGovernanceDAO", async function () {
     assert.equal(executedProposal.approved, false); // forVotes is not greater than againstVotes
   });
 });
+
+it("Should not allow a non-member to vote", async function () {
+  const { ethers } = await network.connect();
+  const [owner, giorgia, chiara] = await ethers.getSigners();
+  const POFToken = await ethers.getContractFactory("POFToken");
+  const pofToken = await POFToken.deploy(ethers.parseEther("1000000"));
+  // Deploy smart contract POFTreasury
+  const POFTreasury = await ethers.getContractFactory("POFTreasury");
+  const treasury = await POFTreasury.deploy(
+    await pofToken.getAddress(),
+    owner.address,
+  );
+  const POFGovernanceDAO = await ethers.getContractFactory("POFGovernanceDAO");
+  const governanceDAO = await POFGovernanceDAO.deploy(
+    await pofToken.getAddress(),
+    await treasury.getAddress(),
+    ethers.parseEther("10"),
+    owner.address,
+  );
+
+  await treasury.setGovernanceDAO(await governanceDAO.getAddress());
+
+  assert.ok(await pofToken.getAddress());
+  assert.ok(await treasury.getAddress());
+  assert.ok(await governanceDAO.getAddress());
+
+  await pofToken.transfer(giorgia.address, ethers.parseEther("100"));
+  await pofToken
+    .connect(giorgia)
+    .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+  await pofToken;
+  await governanceDAO.connect(giorgia).buyShares(5);
+  await governanceDAO
+    .connect(giorgia)
+    .createGovernanceProposal(
+      "Add local vegan producer",
+      "Proposal to add a new local vegan producer",
+      7,
+    );
+  await assert.rejects(governanceDAO.connect(chiara).vote(0, 1),
+  /Only DAO members can call this function/
+  );
+});
