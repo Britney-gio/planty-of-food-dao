@@ -5,7 +5,7 @@ import { network } from "hardhat";
 describe("POFGovernanceDAO", async function () {
   it("Should deploy POFToken, POFTreasury and POFGovernanceDAO", async function () {
     const { ethers } = await network.connect();
-    const [owner, Giorgia, Alessandro] = await ethers.getSigners();
+    const [owner, giorgia, alessandro] = await ethers.getSigners();
     // Deploy smart contract POFToken
     const POFToken = await ethers.getContractFactory("POFToken");
     const pofToken = await POFToken.deploy(ethers.parseEther("1000000"));
@@ -32,25 +32,25 @@ describe("POFGovernanceDAO", async function () {
     assert.ok(await treasury.getAddress());
     assert.ok(await governanceDAO.getAddress());
 
-    await pofToken.transfer(Giorgia.address, ethers.parseEther("100"));
-    await pofToken.transfer(Alessandro.address, ethers.parseEther("100"));
+    await pofToken.transfer(giorgia.address, ethers.parseEther("100"));
+    await pofToken.transfer(alessandro.address, ethers.parseEther("100"));
     await pofToken
-      .connect(Giorgia)
+      .connect(giorgia)
       .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
     await pofToken
-      .connect(Alessandro)
+      .connect(alessandro)
       .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
 
     // TEST1: buy shares and check new member and treasury balance
-    await governanceDAO.connect(Giorgia).buyShares(5);
-    await governanceDAO.connect(Alessandro).buyShares(2);
-    const GiorgiaShares = await governanceDAO.shares(Giorgia.address);
+    await governanceDAO.connect(giorgia).buyShares(5);
+    await governanceDAO.connect(alessandro).buyShares(2);
+    const GiorgiaShares = await governanceDAO.shares(giorgia.address);
     assert.equal(GiorgiaShares, 5n);
-    const AlessandroShares = await governanceDAO.shares(Alessandro.address);
+    const AlessandroShares = await governanceDAO.shares(alessandro.address);
     assert.equal(AlessandroShares, 2n);
-    const isGiorgiaMember = await governanceDAO.isMember(Giorgia.address);
+    const isGiorgiaMember = await governanceDAO.isMember(giorgia.address);
     assert.equal(isGiorgiaMember, true);
-    const isAlessandroMember = await governanceDAO.isMember(Alessandro.address);
+    const isAlessandroMember = await governanceDAO.isMember(alessandro.address);
     assert.equal(isAlessandroMember, true);
     const treasuryBalance = await pofToken.balanceOf(
       await treasury.getAddress(),
@@ -59,7 +59,7 @@ describe("POFGovernanceDAO", async function () {
 
     // TEST2 : create Governance Proposal and check proposal details
     await governanceDAO
-      .connect(Giorgia)
+      .connect(giorgia)
       .createGovernanceProposal(
         "Add new supplier",
         "Proposal to add a new organic supplier",
@@ -81,12 +81,12 @@ describe("POFGovernanceDAO", async function () {
 
     // TEST3 : create Financial Proposal and check proposal details
     await governanceDAO
-      .connect(Giorgia)
+      .connect(giorgia)
       .createFinancialProposal(
         "Support local organic farmers",
         "Proposal to support local organic farmers with DAO funds",
         7,
-        Giorgia.address,
+        giorgia.address,
         ethers.parseEther("20"),
       );
     const updatedProposalCount = await governanceDAO.proposalCount();
@@ -99,34 +99,131 @@ describe("POFGovernanceDAO", async function () {
       "Proposal to support local organic farmers with DAO funds",
     );
     assert.equal(financialProposal.isFinancialProposal, true);
-    assert.equal(financialProposal.recipient, Giorgia.address);
+    assert.equal(financialProposal.recipient, giorgia.address);
     assert.equal(financialProposal.amount, ethers.parseEther("20"));
     assert.equal(financialProposal.executed, false);
     assert.equal(financialProposal.approved, false);
     assert.ok(financialProposal.deadline > 0n);
 
     //  TEST4 : verify ponderation process and voting status
-    await governanceDAO.connect(Giorgia).vote(0, 1); // Giorgia votes FOR the first proposal
-    await governanceDAO.connect(Alessandro).vote(0, 0); // Alessandro votes AGAINST the first proposal
+    await governanceDAO.connect(giorgia).vote(0, 1); // Giorgia votes FOR the first proposal
+    await governanceDAO.connect(alessandro).vote(0, 0); // Alessandro votes AGAINST the first proposal
     const votedProposal = await governanceDAO.ledgerProposals(0);
     assert.equal(votedProposal.forVotes, 5n);
     assert.equal(votedProposal.againstVotes, 2n);
     assert.equal(votedProposal.abstainVotes, 0n);
-    const GiorgiaHasVoted = await governanceDAO.hasVoted(0, Giorgia.address);
+    const GiorgiaHasVoted = await governanceDAO.hasVoted(0, giorgia.address);
     assert.equal(GiorgiaHasVoted, true);
-    const AlessandroHasVoted = await governanceDAO.hasVoted(0, Alessandro.address);
+    const AlessandroHasVoted = await governanceDAO.hasVoted(
+      0,
+      alessandro.address,
+    );
     assert.equal(AlessandroHasVoted, true);
 
-
-    // TEST 5 : execute proposal 
+    // TEST 5 : execute proposal
     await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
     await ethers.provider.send("evm_mine", []);
-    await governanceDAO.executeProposal(0); // Execute the first proposal FOR 
+    await governanceDAO.executeProposal(0); // Execute the first proposal FOR
     const executedProposal = await governanceDAO.ledgerProposals(0);
     assert.equal(executedProposal.executed, true);
     assert.equal(executedProposal.approved, true);
+  });
 
+  it("Should reject proposal when against votes are greater than for votes", async function () {
+    const { ethers } = await network.connect();
+    const [owner, giorgia, alessandro] = await ethers.getSigners();
+    const POFToken = await ethers.getContractFactory("POFToken");
+    const pofToken = await POFToken.deploy(ethers.parseEther("1000000"));
+    // Deploy smart contract POFTreasury
+    const POFTreasury = await ethers.getContractFactory("POFTreasury");
+    const treasury = await POFTreasury.deploy(
+      await pofToken.getAddress(),
+      owner.address,
+    );
+    const POFGovernanceDAO = await ethers.getContractFactory(
+      "POFGovernanceDAO",
+    );
+    const governanceDAO = await POFGovernanceDAO.deploy(
+      await pofToken.getAddress(),
+      await treasury.getAddress(),
+      ethers.parseEther("10"),
+      owner.address,
+    );
 
+    await treasury.setGovernanceDAO(await governanceDAO.getAddress());
 
+    assert.ok(await pofToken.getAddress());
+    assert.ok(await treasury.getAddress());
+    assert.ok(await governanceDAO.getAddress());
+
+    await pofToken.transfer(giorgia.address, ethers.parseEther("100"));
+    await pofToken.transfer(alessandro.address, ethers.parseEther("100"));
+    await pofToken
+      .connect(giorgia)
+      .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+    await pofToken
+      .connect(alessandro)
+      .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+
+    // TEST: buy shares and check new member and treasury balance
+    await governanceDAO.connect(giorgia).buyShares(2);
+    await governanceDAO.connect(alessandro).buyShares(5);
+    const GiorgiaShares = await governanceDAO.shares(giorgia.address);
+    assert.equal(GiorgiaShares, 2n);
+    const AlessandroShares = await governanceDAO.shares(alessandro.address);
+    assert.equal(AlessandroShares, 5n);
+    const isGiorgiaMember = await governanceDAO.isMember(giorgia.address);
+    assert.equal(isGiorgiaMember, true);
+    const isAlessandroMember = await governanceDAO.isMember(alessandro.address);
+    assert.equal(isAlessandroMember, true);
+    const treasuryBalance = await pofToken.balanceOf(
+      await treasury.getAddress(),
+    );
+    assert.equal(treasuryBalance, ethers.parseEther("70"));
+
+    // TEST : create Governance Proposal and check proposal details
+    await governanceDAO
+      .connect(giorgia)
+      .createGovernanceProposal(
+        "Add new supplier",
+        "Proposal to evaluate a supplier that does not fully match POF sustainability criteria",
+        7,
+      );
+    const proposalCount = await governanceDAO.proposalCount();
+    assert.equal(proposalCount, 1n);
+    const governanceProposal = await governanceDAO.ledgerProposals(0);
+    assert.equal(governanceProposal.id, 0n);
+    assert.equal(governanceProposal.title, "Add new supplier");
+    assert.equal(
+      governanceProposal.description,
+      "Proposal to evaluate a supplier that does not fully match POF sustainability criteria",
+    );
+    assert.equal(governanceProposal.isFinancialProposal, false);
+    assert.equal(governanceProposal.executed, false);
+    assert.equal(governanceProposal.approved, false);
+    assert.ok(governanceProposal.deadline > 0n);
+
+    await governanceDAO.connect(giorgia).vote(0, 1); // Giorgia votes FOR the proposal
+    await governanceDAO.connect(alessandro).vote(0, 0); // Alessandro votes AGAINST the proposal
+
+    const rejectedProposalAfterVotes = await governanceDAO.ledgerProposals(0);
+    assert.equal(rejectedProposalAfterVotes.forVotes, 2n);
+    assert.equal(rejectedProposalAfterVotes.againstVotes, 5n);
+    assert.equal(rejectedProposalAfterVotes.abstainVotes, 0n);
+    const GiorgiaHasVoted = await governanceDAO.hasVoted(0, giorgia.address);
+    assert.equal(GiorgiaHasVoted, true);
+    const AlessandroHasVoted = await governanceDAO.hasVoted(
+      0,
+      alessandro.address,
+    );
+    assert.equal(AlessandroHasVoted, true);
+
+    // TEST : execute proposal and check that it is rejected
+    await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
+    await ethers.provider.send("evm_mine", []);
+    await governanceDAO.executeProposal(0); // Execute the rejected proposal
+    const executedProposal = await governanceDAO.ledgerProposals(0);
+    assert.equal(executedProposal.executed, true);
+    assert.equal(executedProposal.approved, false);
   });
 });
