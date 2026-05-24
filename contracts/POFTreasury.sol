@@ -24,12 +24,17 @@ contract POFTreasury is Ownable {
         _;
     }
 
+    // Set the DAO contract address that can manage the treasury funds
     function setGovernanceDAO(address _governanceDAO) external onlyOwner {
         require(_governanceDAO != address(0), "Invalid DAO address");
         governanceDAO = _governanceDAO;
     }
 
-    function transferFunds(address recipient, uint256 amount) external onlyGovernanceDAO {
+    // Transfer funds only when called by the authorized DAO contract
+    function transferFunds(
+        address recipient, 
+        uint256 amount
+        ) external onlyGovernanceDAO {
         require(recipient != address(0), "Invalid recipient address");
         require(amount > 0, "Amount must be greater than zero");
         bool success = pofToken.transfer(recipient, amount);
