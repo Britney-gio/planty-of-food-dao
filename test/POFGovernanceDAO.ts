@@ -544,4 +544,83 @@ describe("POFGovernanceDAO", async function () {
     );
   });
 
+  it("Should execute an approved financial proposal and transfer funds from Treasury", async function () {
+    const { ethers } = await network.connect();
+    const [owner, giorgia, alessandro] = await ethers.getSigners();
+    const POFToken = await ethers.getContractFactory("POFToken");
+    const pofToken = await POFToken.deploy(ethers.parseEther("1000000"));
+    const POFTreasury = await ethers.getContractFactory("POFTreasury");
+    const treasury = await POFTreasury.deploy(
+      await pofToken.getAddress(),
+      owner.address,
+    );
+    const POFGovernanceDAO = await ethers.getContractFactory(
+      "POFGovernanceDAO",
+    );
+    const governanceDAO = await POFGovernanceDAO.deploy(
+      await pofToken.getAddress(),
+      await treasury.getAddress(),
+      ethers.parseEther("10"),
+      owner.address,
+    );
+
+    await treasury.setGovernanceDAO(await governanceDAO.getAddress());
+
+    assert.ok(await pofToken.getAddress());
+    assert.ok(await treasury.getAddress());
+    assert.ok(await governanceDAO.getAddress());
+
+    await pofToken.transfer(giorgia.address, ethers.parseEther("100"));
+    await pofToken.transfer(alessandro.address, ethers.parseEther("100"));
+    await pofToken
+      .connect(giorgia)
+      .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+    await pofToken
+      .connect(alessandro)
+      .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+
+    await governanceDAO.connect(giorgia).buyShares(5);
+    await governanceDAO.connect(alessandro).buyShares(2);
+    const treasuryBalance = await pofToken.balanceOf(
+      await treasury.getAddress(),
+    );
+    assert.equal(treasuryBalance, ethers.parseEther("70"));
+    const giorgiaBalanceBeforeFinancialExecution = await pofToken.balanceOf(
+      giorgia.address,
+    );
+    assert.equal(
+      giorgiaBalanceBeforeFinancialExecution,
+      ethers.parseEther("50"),
+    );
+
+    await governanceDAO
+      .connect(giorgia)
+      .createFinancialProposal(
+        "Support organic producers",
+        "Proposal to support local organic producers with DAO funds",
+        7,
+        giorgia.address,
+        ethers.parseEther("10"),
+      );
+
+    await governanceDAO.connect(giorgia).vote(0, 1);
+    await governanceDAO.connect(alessandro).vote(0, 1);
+    await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60 + 1]);
+    await ethers.provider.send("evm_mine", []);
+    await governanceDAO.executeProposal(0);
+    const executedProposal = await governanceDAO.ledgerProposals(0);
+    assert.equal(executedProposal.executed, true);
+    assert.equal(executedProposal.approved, true);
+
+    const giorgiaBalanceAfter = await pofToken.balanceOf(giorgia.address);
+    const treasuryBalanceAfter = await pofToken.balanceOf(
+      await treasury.getAddress(),
+    );
+
+    assert.equal(
+      giorgiaBalanceAfter - giorgiaBalanceBeforeFinancialExecution,
+      ethers.parseEther("10"),
+    ); // Sum of funds transferred to Giorgia
+    assert.equal(treasuryBalanceAfter, ethers.parseEther("60")); // Treasury balance after transferring funds to Giorgia
+  });
 });
