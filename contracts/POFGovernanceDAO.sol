@@ -195,6 +195,7 @@ contract POFGovernanceDAO is Ownable {
 
         emit MemberVoted(proposalId, msg.sender, choice, votingPower);
     }    
+
     // Executes a proposal after the voting deadline and triggers Treasury transfers when needed
     function executeProposal(uint256 proposalId) external {
         require(proposalId < proposalCount, "Proposal does not exist");
@@ -203,15 +204,14 @@ contract POFGovernanceDAO is Ownable {
         require(!proposal.executed, "Proposal already executed");
         if (proposal.forVotes > proposal.againstVotes) {
             proposal.approved = true;
-            if (proposal.isFinancialProposal) {
-                treasury.transferFunds(proposal.recipient, proposal.amount);
-            }
         }
         proposal.executed = true;
-
+        if (proposal.approved && proposal.isFinancialProposal) {
+            treasury.transferFunds(proposal.recipient, proposal.amount);
+        }
         emit ProposalExecuted(
-            proposalId, 
-            proposal.approved, 
+            proposalId,
+            proposal.approved,
             proposal.isFinancialProposal
         );
     }
