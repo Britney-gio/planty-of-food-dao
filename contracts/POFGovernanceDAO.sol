@@ -20,9 +20,9 @@ contract POFGovernanceDAO is Ownable {
     mapping(address => uint256) public delegatedShares;
 
     enum VoteChoice { 
-        Against, //0
-        For,  // 1
-        Abstain  //2
+        Against, 
+        For,  
+        Abstain  
     }
 
     struct Proposal {
@@ -60,7 +60,7 @@ contract POFGovernanceDAO is Ownable {
         isShareSaleActive = true;
     }
 
-    event SharesPurchase( 
+    event SharesPurchased( 
         address indexed buyer,
         uint256 amount,
         uint256 totalCost
@@ -86,13 +86,14 @@ contract POFGovernanceDAO is Ownable {
         bool isFinancialProposal
     );
 
-    modifier onlyMember(){
+    modifier onlyMember() {
         require(isMember[msg.sender], "Only DAO members can call this function");
         _;
     }
 
+    // Allow users to buy DAO shares using POF tokens
     function buyShares(uint256 amount) external {
-        require(isShareSaleActive,"Share sale is closed");
+        require(isShareSaleActive, "Share sale is closed");
         require(amount > 0, "Amount must be greater than zero");
         uint256 totalCost = amount * sharePrice;
 
@@ -108,13 +109,14 @@ contract POFGovernanceDAO is Ownable {
         if (delegates[msg.sender] != address(0)) {
             delegatedShares[delegates[msg.sender]] += amount;
         }
-        emit SharesPurchase(msg.sender, amount, totalCost);
+        emit SharesPurchased(msg.sender, amount, totalCost);
     }
 
     function closeShareSale() external onlyOwner {
         isShareSaleActive = false;
     }
 
+    // Create a governance proposal without financial fund transfer
     function createGovernanceProposal(
         string calldata title,
         string calldata description,
@@ -136,6 +138,7 @@ contract POFGovernanceDAO is Ownable {
         emit ProposalCreated(proposalId, msg.sender, title, false);
     }
 
+    // Creates a financial proposal that can transfer Treasury funds if approved
     function createFinancialProposal(
         string calldata title,
         string calldata description,
@@ -163,19 +166,21 @@ contract POFGovernanceDAO is Ownable {
         emit ProposalCreated(proposalId, msg.sender, title, true);
     }
 
+    // Allows a member to delegate their voting power to another DAO member
     function delegateVote(address memberDelegate) external onlyMember {
         require(memberDelegate != address(0), "Invalid address");
-        require(memberDelegate != msg.sender,"Cannot delegate yourself");
+        require(memberDelegate != msg.sender, "Cannot delegate yourself");
         require(isMember[memberDelegate], "Delegate must be a DAO member");
         require(delegates[msg.sender] == address(0), "Vote already delegated");
         delegates[msg.sender] = memberDelegate;
         delegatedShares[memberDelegate] += shares[msg.sender];
     }
 
+    // Allows members to vote with direct and delegated voting power
     function vote(uint256 proposalId, VoteChoice choice) external onlyMember {
-        require(proposalId < proposalCount,"Proposal does not exist");
-        require(block.timestamp <= ledgerProposals[proposalId].deadline,"Voting period has ended");
-        require(!hasVoted[proposalId][msg.sender],"Member has already voted");
+        require(proposalId < proposalCount, "Proposal does not exist");
+        require(block.timestamp <= ledgerProposals[proposalId].deadline, "Voting period has ended");
+        require(!hasVoted[proposalId][msg.sender], "Member has already voted");
         require(shares[msg.sender] > 0, "Member has no voting power");
         require(delegates[msg.sender] == address(0), "Delegated members cannot vote directly");
         uint256 votingPower = shares[msg.sender] + delegatedShares[msg.sender];
@@ -190,20 +195,24 @@ contract POFGovernanceDAO is Ownable {
 
         emit MemberVoted(proposalId, msg.sender, choice, votingPower);
     }    
-
+    // Executes a proposal after the voting deadline and triggers Treasury transfers when needed
     function executeProposal(uint256 proposalId) external {
-        require(proposalId < proposalCount,"Proposal does not exist");
+        require(proposalId < proposalCount, "Proposal does not exist");
         Proposal storage proposal = ledgerProposals[proposalId];
         require(block.timestamp > proposal.deadline, "Voting period is still active");
         require(!proposal.executed, "Proposal already executed");
         if (proposal.forVotes > proposal.againstVotes) {
             proposal.approved = true;
             if (proposal.isFinancialProposal) {
-                treasury.transferFunds(proposal.recipient,proposal.amount);
+                treasury.transferFunds(proposal.recipient, proposal.amount);
             }
         }
         proposal.executed = true;
 
-        emit ProposalExecuted(proposalId, proposal.approved, proposal.isFinancialProposal);
+        emit ProposalExecuted(
+            proposalId, 
+            proposal.approved, 
+            proposal.isFinancialProposal
+        );
     }
 }
