@@ -23,8 +23,6 @@ Il progetto è stato sviluppato con l’obiettivo di simulare una governance dec
 
 ---
 
----
-
 # Governance Model
 
 Il sistema di governance implementato combina elementi di:
@@ -33,7 +31,7 @@ Il sistema di governance implementato combina elementi di:
 - **Democrazia liquida**, in cui un membro può delegare il proprio potere di voto a un altro membro della DAO
 
 Il peso del voto è basato sul numero di shares possedute dal membro (`weighted voting`).  
-Ogni membro può delegare il proprio voting power ad un altro membro della DAO, perdendo il diritto di voto diretto e consentendo una gestione più flessibile della governance.
+Ogni membro può delegare il proprio voting power a un altro membro della DAO, perdendo il diritto di voto diretto e consentendo una gestione più flessibile della governance.
 
 I membri possono votare `FOR`, `AGAINST` oppure `ABSTAIN` per una proposal.  
 Le proposal vengono considerate approvate **solamente** quando i voti `FOR` risultano superiori ai voti `AGAINST`; in caso di parità, la proposal verrà automaticamente respinta.
@@ -44,7 +42,7 @@ Le proposal vengono considerate approvate **solamente** quando i voti `FOR` risu
 
 Il progetto è composto da tre smart contract principali:
 
-## POFToken.sol
+### POFToken.sol
 
 Contratto ERC-20 sviluppato tramite OpenZeppelin che rappresenta il token di governance della DAO (`POF`).
 
@@ -53,9 +51,7 @@ Responsabilità principali:
 - gestione del token ERC-20
 - distribuzione della supply iniziale
 
----
-
-## POFTreasury.sol
+### POFTreasury.sol
 
 Contratto responsabile della gestione dei fondi della DAO, progettato per custodire i token POF e consentire trasferimenti solamente dopo l’approvazione di una financial proposal.
 
@@ -64,9 +60,7 @@ Responsabilità principali:
 - custodire i token POF
 - autorizzare trasferimenti solamente tramite il contratto GovernanceDAO
 
----
-
-## POFGovernanceDAO.sol
+### POFGovernanceDAO.sol
 
 Contratto principale della DAO che gestisce l’intero sistema di governance, il cuore pulsante del progetto.
 
@@ -85,37 +79,30 @@ Responsabilità principali:
 
 Durante lo sviluppo del progetto sono state effettuate diverse scelte tecniche con l’obiettivo di avere un flusso leggibile e facilmente estendibile.
 
-## Utilizzo di OpenZeppelin
+### Utilizzo di OpenZeppelin
 
-Per lo sviluppo degli smart contract ERC-20 e della gestione ownership sono state utilizzate le librerie OpenZeppelin, in particolare `ERC20`, `Ownable`, `IERC20`
+Per lo sviluppo degli smart contract ERC-20 e della gestione ownership sono state utilizzate le librerie OpenZeppelin, in particolare `ERC20`, `Ownable`, `IERC20`.
 
----
-
-## Weighted Voting
+### Weighted Voting
 
 Il sistema di voto implementato utilizza un modello di `weighted voting`, in cui il peso del voto dipende dal numero di shares possedute dal membro della DAO.
 
----
-
-## Separazione tra Governance Proposal e Financial Proposal
+### Separazione tra Governance Proposal e Financial Proposal
 
 Durante la progettazione della DAO si è scelto di separare le proposal in due categorie:
 
 - `Governance Proposal`
 - `Financial Proposal`
+
   Questa scelta ha permesso di mantenere più semplice e leggibile la gestione della governance, separando le decisioni puramente organizzative dalle proposal che richiedono trasferimenti di fondi dalla Treasury.
 
 Inoltre, questa architettura ha reso più chiara l’implementazione della funzione `executeProposal`.
 
----
-
-## Liquid Democracy
+### Liquid Democracy
 
 La DAO implementa anche un sistema di `delegated voting`, in cui un membro può delegare il proprio voting power ad un altro membro della DAO, rinunciando temporaneamente al proprio diritto di voto diretto.
 
----
-
-## Governance Ledger
+### Governance Ledger
 
 Le proposal e le votazioni vengono registrate on-chain tramite apposite strutture dati (`mapping` e `struct`), creando un vero e proprio registro decentralizzato delle decisioni della DAO.
 
@@ -165,7 +152,7 @@ npx hardhat test
 
 # Deploy Sepolia
 
-Gli smart contract sono stati deployati sulla testnet Sepolia ai seguenti indirizzi :
+Gli smart contract sono stati deployati sulla testnet Sepolia ai seguenti indirizzi:
 
 ### POFToken
 
@@ -179,7 +166,7 @@ Gli smart contract sono stati deployati sulla testnet Sepolia ai seguenti indiri
 
 `0x355d632527175401A7B2Ae2be62Df1a622659cC9`
 
-## Etherscan
+### Etherscan
 
 https://sepolia.etherscan.io/address/0x355d632527175401A7B2Ae2be62Df1a622659cC9
 
@@ -187,32 +174,84 @@ https://sepolia.etherscan.io/address/0x355d632527175401A7B2Ae2be62Df1a622659cC9
 
 # Installazione ed Esecuzione
 
-## Installazione dipendenze
+### Installazione dipendenze
 
 ```bash
 npm install
 ```
 
-## Compilazione smart contract
+### Compilazione smart contract
 
 ```bash
 npx hardhat compile
 ```
 
-## Esecuzione test
+### Esecuzione test
 
 ```bash
 npx hardhat test
 ```
 
-## Deploy locale
+### Deploy locale
 
 ```bash
 npx hardhat run scripts/deploy.ts
 ```
 
-## Deploy Sepolia
+### Deploy Sepolia
 
 ```bash
 npx hardhat run scripts/deploy.ts --network sepolia
 ```
+
+---
+
+# Screenshots & Demo DAO
+
+### DAO Membership
+
+Acquisto shares DAO e verifica membership on-chain.
+
+![DAO Shares](./screen/shares.png)
+
+![DAO Membership](./screen/isMember.png)
+
+---
+
+### Governance Ledger
+
+Financial proposal registrata nel ledger decentralizzato della DAO con sistema di weighted voting prima del trasferimento token.
+
+![Governance Ledger](./screen/ledgerProposal.png)
+
+---
+
+### Hardhat Testing & Sepolia Deploy
+
+Test automatici Hardhat e deploy reale su testnet Sepolia.
+
+![Hardhat Tests](./screen/test.png)
+
+## ![Sepolia Deploy](./screen/deploy.png)
+
+---
+
+# Conclusioni
+
+Planty of Food DAO è un progetto realizzato durante il Master in Blockchain Development & AI per il corso Smart Contract con Solidity.
+
+Questo progetto mi ha permesso di approfondire concetti che inizialmente apparivano semplici nella teoria ma fondamentali nella pratica, costruendo passo dopo passo una vera e propria DAO e simulando dinamiche realistiche di partecipazione e gestione condivisa.
+
+Ogni componente del sistema è stato sviluppato per funzionare in sinergia con gli altri: dagli smart contract Solidity, ai test automatizzati con Hardhat, fino alla simulazione reale della DAO tramite Remix e Sepolia testnet.
+
+---
+
+# Autore
+
+Sviluppato da **Giorgia Nieli**
+
+Email  
+giorgianieli@gmail.com
+
+LinkedIn  
+https://www.linkedin.com/in/giorgia-nieli-98b0882b0/
