@@ -112,6 +112,7 @@ contract POFGovernanceDAO is Ownable {
         emit SharesPurchased(msg.sender, amount, totalCost);
     }
 
+    // Owner can close the share sale
     function closeShareSale() external onlyOwner {
         isShareSaleActive = false;
     }
