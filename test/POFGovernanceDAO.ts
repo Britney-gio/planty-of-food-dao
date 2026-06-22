@@ -561,6 +561,58 @@ describe("POFGovernanceDAO", async function () {
       /Delegated members cannot vote directly/,
     );
   });
+  
+  it("Should not allow circular delegation", async function () {
+  const { ethers } = await network.connect();
+  const [owner, giorgia, alessandro] = await ethers.getSigners();
+
+  // Deploy contracts
+  const POFToken = await ethers.getContractFactory("POFToken");
+  const pofToken = await POFToken.deploy(ethers.parseEther("1000000"));
+
+  const POFTreasury = await ethers.getContractFactory("POFTreasury");
+  const treasury = await POFTreasury.deploy(
+    await pofToken.getAddress(),
+    owner.address,
+  );
+
+  const POFGovernanceDAO = await ethers.getContractFactory(
+    "POFGovernanceDAO",
+  );
+
+  const governanceDAO = await POFGovernanceDAO.deploy(
+    await pofToken.getAddress(),
+    await treasury.getAddress(),
+    ethers.parseEther("10"),
+    owner.address,
+  );
+
+  await treasury.setGovernanceDAO(await governanceDAO.getAddress());
+
+  // Prepare DAO members
+  await pofToken.transfer(giorgia.address, ethers.parseEther("100"));
+  await pofToken.transfer(alessandro.address, ethers.parseEther("100"));
+
+  await pofToken
+    .connect(giorgia)
+    .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+
+  await pofToken
+    .connect(alessandro)
+    .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+
+  await governanceDAO.connect(giorgia).buyShares(3);
+  await governanceDAO.connect(alessandro).buyShares(5);
+
+  // Giorgia delegates to Alessandro
+  await governanceDAO.connect(giorgia).delegateVote(alessandro.address);
+
+  // Alessandro cannot delegate back to Giorgia
+  await assert.rejects(
+    governanceDAO.connect(alessandro).delegateVote(giorgia.address),
+    /Delegate has already delegated/,
+  );
+});
 
   it("Should execute an approved financial proposal and transfer funds from Treasury", async function () {
     const { ethers } = await network.connect();
