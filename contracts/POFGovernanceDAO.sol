@@ -173,6 +173,7 @@ contract POFGovernanceDAO is Ownable {
         require(memberDelegate != msg.sender, "Cannot delegate yourself");
         require(isMember[memberDelegate], "Delegate must be a DAO member");
         require(delegates[msg.sender] == address(0), "Vote already delegated");
+        require(delegates[memberDelegate] == address(0), "Delegate has already delegated");
         delegates[msg.sender] = memberDelegate;
         delegatedShares[memberDelegate] += shares[msg.sender];
     }
