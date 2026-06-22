@@ -12,4 +12,9 @@ contract POFToken is ERC20, Ownable {
         require(initialSupply > 0, "Initial supply must be greater than zero");
         _mint(msg.sender, initialSupply);
     }
+    function mint(address to, uint256 amount) external onlyOwner {
+        require(to != address(0), "Cannot mint to the zero address");
+        require(amount > 0, "Mint amount must be greater than zero");
+        _mint(to, amount);
+    }
 }
