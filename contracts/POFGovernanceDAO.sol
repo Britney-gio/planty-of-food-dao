@@ -152,6 +152,7 @@ contract POFGovernanceDAO is Ownable {
         require(durationInDays > 0, "Duration must be greater than zero");
         require(recipient != address(0), "Invalid recipient");
         require(amount > 0, "Amount must be greater than zero");
+        require(pofToken.balanceOf(address(treasury)) >= amount, "Treasury has insufficient funds");
 
         uint256 proposalId = proposalCount++;
         Proposal storage newProposal = ledgerProposals[proposalId];
