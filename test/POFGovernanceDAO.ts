@@ -612,7 +612,7 @@ describe("POFGovernanceDAO", async function () {
     governanceDAO.connect(alessandro).delegateVote(giorgia.address),
     /Delegate has already delegated/,
   );
-});
+  });
 
   it("Should execute an approved financial proposal and transfer funds from Treasury", async function () {
     const { ethers } = await network.connect();
@@ -699,5 +699,56 @@ describe("POFGovernanceDAO", async function () {
       ethers.parseEther("10"),
     ); // Sum of funds transferred to Giorgia
     assert.equal(treasuryBalanceAfter, ethers.parseEther("60")); // Treasury balance after transferring funds to Giorgia
+  });
+
+  it("Should not create a financial proposal if Treasury funds are insufficient", async function () {
+  const { ethers } = await network.connect();
+  const [owner, giorgia] = await ethers.getSigners();
+
+  // Deploy contracts
+  const POFToken = await ethers.getContractFactory("POFToken");
+  const pofToken = await POFToken.deploy(ethers.parseEther("1000000"));
+
+  const POFTreasury = await ethers.getContractFactory("POFTreasury");
+  const treasury = await POFTreasury.deploy(
+    await pofToken.getAddress(),
+    owner.address,
+  );
+
+  const POFGovernanceDAO = await ethers.getContractFactory(
+    "POFGovernanceDAO",
+  );
+
+  const governanceDAO = await POFGovernanceDAO.deploy(
+    await pofToken.getAddress(),
+    await treasury.getAddress(),
+    ethers.parseEther("10"),
+    owner.address,
+  );
+
+  await treasury.setGovernanceDAO(await governanceDAO.getAddress());
+
+  // Prepare DAO member
+  await pofToken.transfer(giorgia.address, ethers.parseEther("100"));
+  await pofToken
+    .connect(giorgia)
+    .approve(await governanceDAO.getAddress(), ethers.parseEther("100"));
+
+  // Buy only 5 shares -> Treasury receives 50 POF
+  await governanceDAO.connect(giorgia).buyShares(5);
+
+  // Try to create a proposal requesting more than Treasury balance
+  await assert.rejects(
+    governanceDAO
+      .connect(giorgia)
+      .createFinancialProposal(
+        "Large donation",
+        "Proposal requesting more funds than available",
+        7,
+        giorgia.address,
+        ethers.parseEther("100"),
+      ),
+    /Treasury has insufficient funds/,
+  );
   });
 });
