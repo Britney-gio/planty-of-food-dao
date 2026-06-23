@@ -200,7 +200,7 @@ contract POFGovernanceDAO is Ownable {
     }    
 
     // Executes a proposal after the voting deadline and triggers Treasury transfers when needed
-    function executeProposal(uint256 proposalId) external {
+    function executeProposal(uint256 proposalId) external onlyMember{
         require(proposalId < proposalCount, "Proposal does not exist");
         Proposal storage proposal = ledgerProposals[proposalId];
         require(block.timestamp > proposal.deadline, "Voting period is still active");

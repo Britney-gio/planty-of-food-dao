@@ -122,7 +122,7 @@ describe("POFGovernanceDAO", async function () {
     // Execute the first proposal and verify status
     await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
     await ethers.provider.send("evm_mine", []);
-    await governanceDAO.executeProposal(0); // Execute the first proposal FOR
+    await governanceDAO.connect(giorgia).executeProposal(0); // Execute the first proposal FOR
     const executedProposal = await governanceDAO.ledgerProposals(0);
     assert.equal(executedProposal.executed, true);
     assert.equal(executedProposal.approved, true);
@@ -219,7 +219,7 @@ describe("POFGovernanceDAO", async function () {
     // Execute the rejected proposal
     await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
     await ethers.provider.send("evm_mine", []);
-    await governanceDAO.executeProposal(0);
+    await governanceDAO.connect(giorgia).executeProposal(0);
     const executedProposal = await governanceDAO.ledgerProposals(0);
     assert.equal(executedProposal.executed, true);
     assert.equal(executedProposal.approved, false);
@@ -331,7 +331,7 @@ describe("POFGovernanceDAO", async function () {
     // Execute the proposal and verify tie rejection
     await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
     await ethers.provider.send("evm_mine", []);
-    await governanceDAO.executeProposal(0); // Execute the rejected proposal
+    await governanceDAO.connect(giorgia).executeProposal(0); // Execute the rejected proposal
     const executedProposal = await governanceDAO.ledgerProposals(0);
     assert.equal(executedProposal.executed, true);
     assert.equal(executedProposal.approved, false); // Proposal is rejected because FOR is not greater than AGAINST
@@ -681,7 +681,7 @@ describe("POFGovernanceDAO", async function () {
     // Move blockchain time after proposal deadline and execute the approved financial proposal
     await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60 + 1]);
     await ethers.provider.send("evm_mine", []);
-    await governanceDAO.executeProposal(0);
+    await governanceDAO.connect(giorgia).executeProposal(0);
     const executedProposal = await governanceDAO.ledgerProposals(0);
     assert.equal(executedProposal.executed, true);
     assert.equal(executedProposal.approved, true);
