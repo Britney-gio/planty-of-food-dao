@@ -161,19 +161,19 @@ Gli smart contract sono stati deployati sulla testnet Sepolia ai seguenti indiri
 
 ### POFToken
 
-`0xB6e2A924F20A049C1853aD6212449D253C5b61B7`
+`0x404DC030237eDcb35e7bf77b48b693EB8d83296d`
 
 ### POFTreasury
 
-`0x0Af25aC1870A2A7365aa9025Bd122b768bb8F54e`
+`0x64eC9F1C0f2A8DD07a92b33e1D953f00895b8C5c`
 
 ### POFGovernanceDAO
 
-`0xE4Fe762514f72DB17189C0069c1b45f28D1aFa1C`
+`0x0C4580Eb39107107F73Bddba01B446Aa5f34D692`
 
 ### Etherscan
 
-https://sepolia.etherscan.io/address/0xE4Fe762514f72DB17189C0069c1b45f28D1aFa1C
+https://sepolia.etherscan.io/address/0x0C4580Eb39107107F73Bddba01B446Aa5f34D692
 
 ---
 
@@ -215,19 +215,21 @@ npx hardhat run scripts/deploy.ts --network sepolia
 
 ### DAO Membership
 
-Acquisto shares DAO e verifica membership on-chain.
+Acquisto di 5 shares DAO e verifica della membership on-chain tramite il contratto `POFGovernanceDAO`.
 
-![DAO Shares](./screen/shares.png)
+![DAO Shares](./screen/rev2/shares-rev2.jpg)
 
-![DAO Membership](./screen/isMember.png)
+![DAO Membership](./screen/rev2/isMembre-rev2.jpg)
 
 ---
 
 ### Governance Ledger
 
-Financial proposal registrata nel ledger decentralizzato della DAO con sistema di weighted voting prima del trasferimento token.
+Creazione di una governance proposal sulla rete Sepolia e registrazione della proposta nel ledger decentralizzato della DAO.
 
-![Governance Ledger](./screen/ledgerProposal.png)
+![Governance Proposal](./screen/rev2/proposal-rev2.jpg)
+
+![Governance Ledger](./screen/rev2/ledger0-rev2.jpg)
 
 ---
 
@@ -235,9 +237,9 @@ Financial proposal registrata nel ledger decentralizzato della DAO con sistema d
 
 Test automatici Hardhat e deploy reale su testnet Sepolia.
 
-![Hardhat Tests](./screen/rev2/test-rev2)
+![Hardhat Tests](./screen/rev2/test-rev2.jpg)
 
-## ![Sepolia Deploy](./screen/rev2/deploy-rev2)
+## ![Sepolia Deploy](./screen/rev2/deploy-rev2.jpg)
 
 ---
 
