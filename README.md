@@ -50,6 +50,7 @@ Responsabilità principali:
 
 - gestione del token ERC-20
 - distribuzione della supply iniziale
+- possibilità per l'owner di effettuare mint controllati per la distribuzione dei token ai membri della DAO
 
 ### POFTreasury.sol
 
@@ -116,7 +117,9 @@ Misure implementate:
 
 - controllo accessi tramite `onlyOwner` e `onlyMember`
 - protezione contro il double voting
+- prevenzione delle deleghe circolari (`circular delegation`)
 - validazione proposal e voting deadline
+- verifica dei fondi disponibili della Treasury prima della creazione delle financial proposal
 - controllo indirizzi `address(0)`
 - gestione separata Treasury / GovernanceDAO
 - validazione trasferimenti token ERC-20 tramite controllo boolean `success`
@@ -135,11 +138,13 @@ I test coprono i principali flussi della DAO:
 - creazione governance e financial proposal
 - weighted voting
 - delegated voting e liquid democracy
+- prevenzione delle deleghe circolari
 - approvazione / rigetto proposal
 - gestione voti `FOR`, `AGAINST`, `ABSTAIN`
 - protezione contro il double voting
 - controllo voting deadline
 - controllo accessi `onlyMember`
+- verifica fondi Treasury nelle financial proposal
 - esecuzione financial proposal e trasferimento fondi Treasury
 
 Per eseguire i test:
@@ -156,19 +161,19 @@ Gli smart contract sono stati deployati sulla testnet Sepolia ai seguenti indiri
 
 ### POFToken
 
-`0x61AB550aba147dd349490d3623e20f34126aFB89`
+`0xB6e2A924F20A049C1853aD6212449D253C5b61B7`
 
 ### POFTreasury
 
-`0x4d430A527453F29281d4a3c6E9004eA8ca3EB1A4`
+`0x0Af25aC1870A2A7365aa9025Bd122b768bb8F54e`
 
 ### POFGovernanceDAO
 
-`0x355d632527175401A7B2Ae2be62Df1a622659cC9`
+`0xE4Fe762514f72DB17189C0069c1b45f28D1aFa1C`
 
 ### Etherscan
 
-https://sepolia.etherscan.io/address/0x355d632527175401A7B2Ae2be62Df1a622659cC9
+https://sepolia.etherscan.io/address/0xE4Fe762514f72DB17189C0069c1b45f28D1aFa1C
 
 ---
 
