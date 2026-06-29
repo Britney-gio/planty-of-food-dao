@@ -235,9 +235,9 @@ Financial proposal registrata nel ledger decentralizzato della DAO con sistema d
 
 Test automatici Hardhat e deploy reale su testnet Sepolia.
 
-![Hardhat Tests](./screen/test.png)
+![Hardhat Tests](./screen/rev2/test-rev2)
 
-## ![Sepolia Deploy](./screen/deploy.png)
+## ![Sepolia Deploy](./screen/rev2/deploy-rev2)
 
 ---
 
